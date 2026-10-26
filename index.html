@@ -1,0 +1,755 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Simulador financeiro do salão: preço, material, tempo e atendimentos por semana.">
+<meta name="theme-color" content="#5A2140">
+<meta name="apple-mobile-web-app-title" content="Simulador">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%235A2140%27/%3E%3Ctext x=%2732%27 y=%2744%27 font-family=%27Georgia,serif%27 font-size=%2734%27 font-weight=%27700%27 text-anchor=%27middle%27 fill=%27%23F2C9D7%27%3ER$%3C/text%3E%3C/svg%3E">
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+</head>
+<body>
+<title>Simulador do Salão</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
+<style id="css">
+/* Layout: workbench. Inputs on the left, a sticky result card on the right; on phones the result card leads and a slim result bar stays pinned to the bottom. */
+:root {
+  --bg: #F6F1F2;
+  --surface: #FFFFFF;
+  --surface-2: #F1E6EA;
+  --ink: #2A1A22;
+  --muted: #76616B;
+  --line: #E4D4DA;
+  --accent: #6B2D4A;
+  --accent-soft: #F0DDE5;
+  --on-accent: #FFFFFF;
+  --rose: #C2667F;
+  --hero-bg: #5A2140;
+  --hero-ink: #FFFFFF;
+  --hero-soft: #F2C9D7;
+  --hero-track: rgba(255, 255, 255, 0.18);
+  --hero-neg: #FFB9A8;
+  --good: #2C7150;
+  --good-bg: #DFF0E6;
+  --bad: #B0412C;
+  --bad-bg: #F8E0D9;
+  --warn: #8C5F14;
+  --warn-bg: #F6EBD6;
+  --shadow: 0 1px 2px rgba(42, 26, 34, 0.10);
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1A1216; --surface: #241920; --surface-2: #2F2029; --ink: #F3E9ED; --muted: #B39CA7; --line: #3C2B34;
+    --accent: #E6A2BA; --accent-soft: #3A2430; --on-accent: #2A1A22; --rose: #D98AA1;
+    --hero-bg: #3E1B2E; --hero-ink: #FFF5F8; --hero-soft: #E9B3C6; --hero-track: rgba(255, 255, 255, 0.14); --hero-neg: #FFB9A8;
+    --good: #84CFA6; --good-bg: #1D3A2B; --bad: #F2A08B; --bad-bg: #45241C; --warn: #E2BC78; --warn-bg: #3D2F17;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1A1216; --surface: #241920; --surface-2: #2F2029; --ink: #F3E9ED; --muted: #B39CA7; --line: #3C2B34;
+  --accent: #E6A2BA; --accent-soft: #3A2430; --on-accent: #2A1A22; --rose: #D98AA1;
+  --hero-bg: #3E1B2E; --hero-ink: #FFF5F8; --hero-soft: #E9B3C6; --hero-track: rgba(255, 255, 255, 0.14); --hero-neg: #FFB9A8;
+  --good: #84CFA6; --good-bg: #1D3A2B; --bad: #F2A08B; --bad-bg: #45241C; --warn: #E2BC78; --warn-bg: #3D2F17;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+h1, h2 { font-family: var(--font-display); font-weight: 600; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+button { font: inherit; }
+
+.wrap {
+  max-width: 1180px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* cabeçalho */
+.top { display: flex; flex-wrap: wrap; gap: 18px 32px; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; }
+.intro { min-width: 0; flex: 1 1 420px; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--rose); }
+h1 { font-size: clamp(32px, 5vw, 46px); line-height: 1.05; margin: 6px 0 10px; }
+.lead { color: var(--muted); max-width: 62ch; margin: 0 0 12px; }
+.actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; flex: 0 1 380px; min-width: 0; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.btn { font-size: 14px; font-weight: 600; padding: 9px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.btn:hover { border-color: var(--rose); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.primary:disabled { opacity: 0.45; cursor: default; }
+.btn.danger { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); }
+.small { font-size: 13px; color: var(--muted); margin: 0; text-align: right; }
+.copybox { width: 100%; min-height: 150px; font: 13px/1.45 ui-monospace, "Cascadia Mono", Consolas, monospace; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); padding: 10px; resize: vertical; }
+button:focus-visible, .txt:focus-visible, .copybox:focus-visible { outline: 2px solid var(--rose); outline-offset: 2px; }
+
+.chip { display: inline-flex; align-items: center; font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; letter-spacing: 0.02em; white-space: nowrap; }
+.chip.ok { background: var(--good-bg); color: var(--good); }
+.chip.bad { background: var(--bad-bg); color: var(--bad); }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.neutral { background: var(--surface-2); color: var(--muted); }
+
+/* grade principal */
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 372px; gap: 28px; align-items: start; }
+main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px 22px; min-width: 0; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.panel h2 { font-size: 23px; }
+.panel-head .small { text-align: left; }
+.hint { color: var(--muted); font-size: 14px; margin: 4px 0 12px; max-width: 70ch; }
+.foot { color: var(--muted); font-size: 13px; margin: 0; }
+
+/* campos */
+.f { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.f > span { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.f.on > span { color: var(--accent); }
+.in { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--line); border-radius: 9px; min-width: 0; }
+.f.on .in { border-color: var(--rose); }
+.in:focus-within { border-color: var(--rose); box-shadow: 0 0 0 3px var(--accent-soft); }
+.in i { font-style: normal; font-size: 12.5px; color: var(--muted); padding-left: 9px; white-space: nowrap; }
+.in i.suf { padding-left: 0; padding-right: 9px; }
+.in input { flex: 1; min-width: 0; width: 100%; border: 0; background: transparent; color: var(--ink); font: inherit; font-variant-numeric: tabular-nums; padding: 8px 9px; outline: none; }
+.txt { width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 9px; background: var(--bg); color: var(--ink); font: inherit; font-weight: 600; padding: 8px 10px; }
+.txt:focus { border-color: var(--rose); box-shadow: 0 0 0 3px var(--accent-soft); outline: none; }
+
+.metas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+
+/* serviços */
+.svc { display: grid; grid-template-columns: minmax(0, 1fr) 36px; column-gap: 6px; row-gap: 10px; padding: 16px 0; }
+.svc + .svc { border-top: 1px solid var(--line); }
+.svc-fields { grid-column: 1; grid-row: 1; display: grid; grid-template-columns: minmax(0, 1.7fr) repeat(4, minmax(0, 1fr)); gap: 8px; align-items: end; }
+.rm { grid-column: 2; grid-row: 1; align-self: end; width: 36px; height: 38px; border-radius: 9px; border: 1px solid transparent; background: transparent; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; }
+.rm:hover { color: var(--bad); background: var(--bad-bg); }
+.svc-out { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; align-items: center; }
+.track { position: relative; height: 10px; background: var(--surface-2); border-radius: 6px; }
+.fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; background: var(--accent); transition: width 0.2s ease; }
+.fill.low { background: var(--bad); }
+.meta-line { position: absolute; top: -5px; bottom: -5px; width: 0; border-left: 2px dashed var(--ink); opacity: 0.55; }
+.svc-val { display: flex; gap: 8px; align-items: center; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.svc-note { grid-column: 1 / -1; margin: 0; font-size: 13px; color: var(--muted); }
+.svc-note b { color: var(--ink); font-weight: 600; }
+.svc-note .fix { color: var(--bad); font-weight: 600; }
+.empty { color: var(--muted); font-size: 14px; margin: 8px 0; }
+
+/* custos fixos */
+.rent { padding: 4px 0 14px; border-bottom: 1px solid var(--line); }
+.rent-h { font-weight: 600; margin-bottom: 6px; }
+.rent-f { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.cost { display: grid; grid-template-columns: minmax(0, 1fr) 150px 36px; gap: 8px; align-items: center; padding: 6px 0; }
+.cost:first-child { padding-top: 12px; }
+.cost .rm { grid-column: auto; grid-row: auto; align-self: center; }
+.cost .txt { font-weight: 500; }
+.cost-total { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font-weight: 700; }
+.cost-total small { font-weight: 500; color: var(--muted); }
+.cost-total b { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+.add { margin-top: 10px; width: 100%; padding: 10px; border: 1.5px dashed var(--line); background: transparent; border-radius: 10px; color: var(--accent); font-weight: 600; cursor: pointer; }
+.add:hover { border-color: var(--rose); }
+
+/* resultado */
+.aside { display: flex; flex-direction: column; gap: 12px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); max-height: calc(100vh - 32px - env(safe-area-inset-top, 0px)); overflow-y: auto; scrollbar-width: thin; min-width: 0; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: var(--surface-2); border-radius: 12px; }
+.seg button { border: 0; border-radius: 9px; padding: 8px 6px; background: transparent; color: var(--muted); font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.hero { background: var(--hero-bg); color: var(--hero-ink); border-radius: 18px; padding: 20px 22px; }
+.hero .lbl { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--hero-soft); }
+.hero .big { font-family: var(--font-display); font-size: clamp(40px, 6vw, 50px); font-weight: 600; line-height: 1.05; margin: 6px 0 14px; font-variant-numeric: tabular-nums; }
+.hero .big.neg { color: var(--hero-neg); }
+.prog { height: 8px; background: var(--hero-track); border-radius: 6px; overflow: hidden; }
+.prog > div { height: 100%; background: var(--hero-soft); border-radius: 6px; transition: width 0.2s ease; }
+.hero p { margin: 10px 0 0; font-size: 14px; line-height: 1.45; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; min-width: 0; }
+.tile .k { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+.tile .v { font-family: var(--font-display); font-size: 23px; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1.2; margin-top: 2px; }
+.tile .v small { font-family: var(--font-body); font-size: 13px; font-weight: 600; color: var(--muted); }
+.tile .s { font-size: 12px; color: var(--muted); line-height: 1.3; margin-top: 2px; }
+.facts { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 4px 14px; }
+.facts div { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 14px; }
+.facts div + div { border-top: 1px solid var(--line); }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+.mei { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+.mei-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; font-weight: 600; font-size: 14px; }
+.mei .track .fill { background: var(--good); }
+.mei .track .fill.warn { background: var(--warn); }
+.mei .track .fill.low { background: var(--bad); }
+.mei p { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+
+/* barra fixa no celular */
+.bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: none;
+  background: var(--hero-bg); color: var(--hero-ink);
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  transform: translateY(110%); transition: transform 0.2s ease;
+}
+.bar.show { transform: none; }
+.bar .bl { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--hero-soft); }
+.bar .bv { font-family: var(--font-display); font-size: 24px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.bar .bs { font-size: 13px; text-align: right; }
+
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); z-index: 30;
+  display: flex; gap: 14px; align-items: center; max-width: calc(100% - 32px);
+  background: var(--ink); color: var(--bg); padding: 10px 12px 10px 16px; border-radius: 12px; font-size: 14px; box-shadow: var(--shadow);
+}
+.toast button { border: 0; background: transparent; color: var(--bg); font-weight: 700; text-decoration: underline; cursor: pointer; padding: 4px; }
+
+@media (max-width: 920px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .aside { order: -1; position: static; max-height: none; overflow: visible; }
+  .actions { align-items: flex-start; flex-basis: 100%; }
+  .btns { justify-content: flex-start; }
+  .small { text-align: left; }
+  .bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .wrap { padding-block-end: 112px; }
+  .toast { bottom: calc(86px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (min-width: 560px) and (max-width: 920px) {
+  .tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .panel { padding: 18px 16px; }
+  .svc-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .svc-fields .name { grid-column: 1 / -1; }
+  .rm { align-self: start; margin-top: 20px; }
+  .metas { grid-template-columns: 1fr 1fr; }
+  .metas .f:first-child { grid-column: 1 / -1; }
+  .cost { grid-template-columns: minmax(0, 1fr) 118px 36px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, .bar, .fill, .prog > div { transition: none !important; }
+}
+</style>
+<div id="app"></div>
+<script type="application/json" id="saved">null</script>
+<script id="main">
+(function () {
+  "use strict";
+
+  // Fontes do documento, usadas para regravar a página com os números salvos.
+  var SRC_JS = (document.currentScript || document.getElementById("main")).textContent;
+  var SRC_CSS = document.getElementById("css").textContent;
+  var SKELETON_RESET = ":root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}";
+  var PAGE_TOP = '<title>Simulador do Salão</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap">\n';
+
+  var KEY = "simulador-salao-v1";
+  var MEI_LIMITE = 81000;
+
+  var DEFAULTS = {
+    v: 1, edited: false, updatedAt: 0, fase: 2,
+    salario: 3000, taxa: 3, semanas: 4,
+    aluguel1: 800, aluguel2: 1000,
+    custos: [
+      { n: "Luz", v: 200 },
+      { n: "Água", v: 80 },
+      { n: "Internet e celular", v: 100 },
+      { n: "MEI (DAS)", v: 86 },
+      { n: "Limpeza, descartáveis e lavanderia", v: 100 },
+      { n: "Divulgação (Instagram)", v: 100 },
+      { n: "Manutenção de equipamento", v: 50 }
+    ],
+    servicos: [
+      { n: "Mechas", p: 300, m: 60, t: 210, q: 1 },
+      { n: "Corte", p: 150, m: 5, t: 45, q: 1 },
+      { n: "Alisamento", p: 180, m: 40, t: 165, q: 1 },
+      { n: "Maquiagem", p: 225, m: 25, t: 75, q: 1 },
+      { n: "Aplicação de cílios", p: 150, m: 20, t: 135, q: 2 },
+      { n: "Manutenção de cílios", p: 90, m: 11, t: 75, q: 4 },
+      { n: "Brow lamination", p: 90, m: 12, t: 60, q: 2 },
+      { n: "Design de sobrancelha", p: 40, m: 5, t: 30, q: 3 }
+    ]
+  };
+
+  var BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0, minimumFractionDigits: 0 });
+  var N2 = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 });
+  var N1 = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 });
+  function brl(v) { return BRL.format(Math.round(v) || 0); }
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function $(id) { return document.getElementById(id); }
+
+  function parseNum(s) {
+    s = String(s == null ? "" : s).replace(/R\$|%|min|\s/gi, "");
+    if (!s) return 0;
+    if (s.indexOf(",") >= 0) s = s.replace(/\./g, "").replace(",", ".");
+    else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+    var n = parseFloat(s);
+    return isFinite(n) && n >= 0 ? n : 0;
+  }
+  function num(v, d) { v = Number(v); return isFinite(v) && v >= 0 ? v : d; }
+
+  function normalize(s) {
+    if (!s || typeof s !== "object") return null;
+    var d = DEFAULTS;
+    return {
+      v: 1, edited: !!s.edited, updatedAt: num(s.updatedAt, 0), fase: s.fase === 1 ? 1 : 2,
+      salario: num(s.salario, d.salario), taxa: num(s.taxa, d.taxa), semanas: num(s.semanas, d.semanas),
+      aluguel1: num(s.aluguel1, d.aluguel1), aluguel2: num(s.aluguel2, d.aluguel2),
+      custos: Array.isArray(s.custos) ? s.custos.map(function (c) { return { n: String((c && c.n) || "").slice(0, 60), v: num(c && c.v, 0) }; }) : clone(d.custos),
+      servicos: Array.isArray(s.servicos) ? s.servicos.map(function (x) {
+        x = x || {};
+        return { n: String(x.n || "").slice(0, 60), p: num(x.p, 0), m: num(x.m, 0), t: num(x.t, 0), q: num(x.q, 0) };
+      }) : clone(d.servicos)
+    };
+  }
+
+  // ---------- estado ----------
+  var saved = null, local = null, localOK = true;
+  try { saved = normalize(JSON.parse($("saved").textContent)); } catch (e) { saved = null; }
+  try { local = normalize(JSON.parse(localStorage.getItem(KEY))); } catch (e) { local = null; localOK = false; }
+  var savedAt = saved ? saved.updatedAt : 0;
+  var state = (local && (!saved || local.updatedAt > saved.updatedAt)) ? local : (saved || clone(DEFAULTS));
+
+  function saveLocal() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); localOK = true; } catch (e) { localOK = false; }
+  }
+
+  // ---------- contas ----------
+  function calc(s) {
+    var W = s.semanas, tx = Math.min(s.taxa, 99) / 100;
+    var aluguel = s.fase === 1 ? s.aluguel1 : s.aluguel2;
+    var fixos = aluguel + s.custos.reduce(function (a, c) { return a + c.v; }, 0);
+    var fatS = 0, matS = 0, qS = 0, minS = 0;
+    var svcs = s.servicos.map(function (x) {
+      var sobra = x.p - x.m - x.p * tx;
+      var h = x.t / 60;
+      fatS += x.p * x.q; matS += x.m * x.q; qS += x.q; minS += x.t * x.q;
+      return { sobra: sobra, h: h, porHora: h > 0 ? sobra / h : null, mes: sobra * x.q * W, m: x.m };
+    });
+    var fat = fatS * W, mat = matS * W, taxa = fat * tx, contrib = fat - mat - taxa;
+    var atendMes = qS * W, horasMes = (minS / 60) * W;
+    var cpa = atendMes > 0 ? contrib / atendMes : 0;
+    var horaMin = horasMes > 0 ? (fixos + s.salario) / horasMes : null;
+    var maxH = horaMin ? horaMin * 1.3 : 1;
+    svcs.forEach(function (v) {
+      if (v.porHora != null && v.porHora > maxH) maxH = v.porHora;
+      v.low = horaMin != null && v.porHora != null && v.porHora < horaMin;
+      v.precoMin = horaMin != null && v.h > 0 ? Math.ceil(((horaMin * v.h + v.m) / (1 - tx)) / 5) * 5 : null;
+    });
+    return {
+      aluguel: aluguel, fixos: fixos, fat: fat, mat: mat, taxa: taxa, contrib: contrib,
+      sobra: contrib - fixos, qS: qS, horasMes: horasMes, W: W,
+      ticket: atendMes > 0 ? fat / atendMes : 0, cpa: cpa,
+      empata: cpa > 0 && W > 0 ? fixos / cpa / W : null,
+      paraSalario: cpa > 0 && W > 0 ? (fixos + s.salario) / cpa / W : null,
+      horaMin: horaMin, maxH: maxH, svcs: svcs, anual: fat * 12
+    };
+  }
+
+  // ---------- estrutura ----------
+  function shell() {
+    return '' +
+'<div class="wrap">' +
+  '<header class="top">' +
+    '<div class="intro">' +
+      '<div class="eyebrow">Plano financeiro do salão</div>' +
+      '<h1>Simulador do salão</h1>' +
+      '<p class="lead">Troque os valores pelos seus: preço, material, tempo e quantos atendimentos por semana. As contas se refazem na hora.</p>' +
+      '<span class="chip neutral" id="exChip">Valores de exemplo, tirados do plano</span>' +
+    '</div>' +
+    '<div class="actions">' +
+      '<div class="btns">' +
+        '<button class="btn primary" id="btnSave" type="button" hidden>Salvar</button>' +
+        '<button class="btn" id="btnCopy" type="button">Copiar resumo</button>' +
+        '<button class="btn" id="btnReset" type="button">Voltar ao exemplo</button>' +
+      '</div>' +
+      '<p class="small" id="saveMsg" role="status"></p>' +
+      '<textarea class="copybox" id="copyBox" readonly hidden aria-label="Resumo para copiar"></textarea>' +
+    '</div>' +
+  '</header>' +
+  '<div class="layout">' +
+    '<main>' +
+      '<section class="panel" aria-labelledby="h-meta">' +
+        '<div class="panel-head"><h2 id="h-meta">Sua meta</h2></div>' +
+        '<p class="hint">Quanto você quer tirar por mês e duas regras da conta. Use 4 semanas para uma conta conservadora; o mês tem em média 4,3.</p>' +
+        '<div class="metas" id="metas"></div>' +
+      '</section>' +
+      '<section class="panel" aria-labelledby="h-svc">' +
+        '<div class="panel-head"><h2 id="h-svc">Serviços</h2><span class="small" id="svcSum"></span></div>' +
+        '<p class="hint">Preço, material gasto por cliente, tempo na cadeira e quantas vezes por semana. A barra mostra quanto cada serviço rende por hora; a linha tracejada é a sua hora mínima.</p>' +
+        '<div id="svcList"></div>' +
+        '<button class="add" type="button" data-act="add-svc">+ Adicionar serviço</button>' +
+      '</section>' +
+      '<section class="panel" aria-labelledby="h-fix">' +
+        '<div class="panel-head"><h2 id="h-fix">Custos fixos do mês</h2></div>' +
+        '<p class="hint">O que você paga todo mês, tendo cliente ou não.</p>' +
+        '<div id="fixList"></div>' +
+        '<button class="add" type="button" data-act="add-custo">+ Adicionar custo</button>' +
+        '<div class="cost-total"><span>Total no mês <small id="faseLbl"></small></span><b id="custosTotal"></b></div>' +
+      '</section>' +
+      '<p class="foot">Limite do MEI usado na conta: R$ 81 mil por ano. No primeiro ano ele é proporcional aos meses abertos. Confirme impostos e limites com um contador.</p>' +
+    '</main>' +
+    '<aside class="aside" aria-label="Resultado">' +
+      '<div class="seg" role="group" aria-label="Período da conta">' +
+        '<button type="button" data-act="fase" data-v="1" id="fase1">Meses 1 a 3</button>' +
+        '<button type="button" data-act="fase" data-v="2" id="fase2">Do 4º mês em diante</button>' +
+      '</div>' +
+      '<div class="hero" id="hero">' +
+        '<div class="lbl">Sobra para você por mês</div>' +
+        '<div class="big" id="heroVal"></div>' +
+        '<div class="prog" aria-hidden="true"><div id="heroProg"></div></div>' +
+        '<p id="heroTxt"></p>' +
+      '</div>' +
+      '<div class="tiles">' +
+        '<div class="tile"><div class="k">Faturamento</div><div class="v" id="tFat"></div><div class="s" id="tFatS"></div></div>' +
+        '<div class="tile"><div class="k">Custos fixos</div><div class="v" id="tFix"></div><div class="s" id="tFixS"></div></div>' +
+        '<div class="tile"><div class="k">Para empatar</div><div class="v" id="tEmp"></div><div class="s">só para pagar os custos fixos</div></div>' +
+        '<div class="tile"><div class="k">Hora mínima</div><div class="v" id="tHora"></div><div class="s" id="tHoraS"></div></div>' +
+      '</div>' +
+      '<dl class="facts">' +
+        '<div><dt>Valor médio por cliente</dt><dd id="fTicket"></dd></div>' +
+        '<div><dt>Sobra por atendimento</dt><dd id="fCpa"></dd></div>' +
+        '<div><dt>Material e maquininha no mês</dt><dd id="fVar"></dd></div>' +
+        '<div><dt>Para tirar o salário inteiro</dt><dd id="fSal"></dd></div>' +
+        '<div><dt>Reserva recomendada</dt><dd id="fRes"></dd></div>' +
+      '</dl>' +
+      '<div class="mei">' +
+        '<div class="mei-h"><span>Limite do MEI</span><span id="meiChip"></span></div>' +
+        '<div class="track" aria-hidden="true"><div class="fill" id="meiFill"></div><div class="meta-line" style="left:76.9%"></div></div>' +
+        '<p id="meiTxt"></p>' +
+      '</div>' +
+    '</aside>' +
+  '</div>' +
+'</div>' +
+'<div class="bar" id="bar" aria-hidden="true">' +
+  '<div><div class="bl">Sobra para você</div><div class="bv" id="barVal"></div></div>' +
+  '<div class="bs" id="barSub"></div>' +
+'</div>' +
+'<div class="toast" id="toast" hidden role="status"><span id="toastMsg"></span><button type="button" id="toastUndo">Desfazer</button></div>';
+  }
+
+  function field(id, bind, label, value, pre, suf, cls) {
+    return '<label class="f ' + (cls || "") + '" for="' + id + '" id="' + id + '-f"><span>' + label + '</span><div class="in">' +
+      (pre ? '<i>' + pre + '</i>' : '') +
+      '<input id="' + id + '" data-bind="' + bind + '" inputmode="decimal" autocomplete="off" value="' + esc(N2.format(value)) + '">' +
+      (suf ? '<i class="suf">' + suf + '</i>' : '') + '</div></label>';
+  }
+
+  function renderMetas() {
+    $("metas").innerHTML =
+      field("salario", "salario", "Salário que você quer", state.salario, "R$") +
+      field("taxa", "taxa", "Taxa da maquininha", state.taxa, "", "%") +
+      field("semanas", "semanas", "Semanas no mês", state.semanas, "", "sem.");
+  }
+
+  function renderSvc() {
+    var html = state.servicos.map(function (x, i) {
+      var p = "svc-" + i;
+      return '<div class="svc">' +
+        '<div class="svc-fields">' +
+          '<label class="f name" for="' + p + '-n"><span>Serviço</span><input class="txt" id="' + p + '-n" data-bind="svc.' + i + '.n" value="' + esc(x.n) + '" placeholder="Nome do serviço" autocomplete="off"></label>' +
+          field(p + "-p", "svc." + i + ".p", "Preço", x.p, "R$") +
+          field(p + "-m", "svc." + i + ".m", "Material", x.m, "R$") +
+          field(p + "-t", "svc." + i + ".t", "Tempo", x.t, "", "min") +
+          field(p + "-q", "svc." + i + ".q", "Por semana", x.q, "", "x") +
+        '</div>' +
+        '<button class="rm" type="button" data-act="rm-svc" data-i="' + i + '" aria-label="Remover ' + esc(x.n || "serviço") + '">×</button>' +
+        '<div class="svc-out" id="' + p + '-out"></div>' +
+      '</div>';
+    }).join("");
+    $("svcList").innerHTML = html || '<p class="empty">Nenhum serviço ainda. Adicione o primeiro abaixo.</p>';
+  }
+
+  function renderFix() {
+    var html = '<div class="rent"><div class="rent-h">Aluguel</div><div class="rent-f">' +
+      field("al-1", "aluguel1", "Meses 1 a 3", state.aluguel1, "R$") +
+      field("al-2", "aluguel2", "Do 4º mês em diante", state.aluguel2, "R$") +
+      '</div></div>';
+    html += state.custos.map(function (c, i) {
+      return '<div class="cost">' +
+        '<input class="txt" id="c-' + i + '-n" data-bind="custo.' + i + '.n" value="' + esc(c.n) + '" placeholder="Nome do custo" aria-label="Nome do custo" autocomplete="off">' +
+        '<div class="in"><i>R$</i><input id="c-' + i + '-v" data-bind="custo.' + i + '.v" inputmode="decimal" autocomplete="off" value="' + esc(N2.format(c.v)) + '" aria-label="Valor por mês"></div>' +
+        '<button class="rm" type="button" data-act="rm-custo" data-i="' + i + '" aria-label="Remover ' + esc(c.n || "custo") + '">×</button>' +
+      '</div>';
+    }).join("");
+    $("fixList").innerHTML = html;
+  }
+
+  function renderInputs() { renderMetas(); renderSvc(); renderFix(); }
+
+  // ---------- saídas ----------
+  function update() {
+    var r = calc(state);
+
+    state.servicos.forEach(function (x, i) {
+      var o = $("svc-" + i + "-out"), v = r.svcs[i];
+      if (!o || !v) return;
+      if (v.porHora == null) {
+        o.innerHTML = '<p class="svc-note">Coloque o tempo do serviço para ver quanto ele rende por hora.</p>';
+        return;
+      }
+      var w = Math.max(0, Math.min(1, v.porHora / r.maxH)) * 100;
+      var meta = r.horaMin != null ? '<div class="meta-line" style="left:' + (r.horaMin / r.maxH * 100).toFixed(1) + '%"></div>' : '';
+      var chip = r.horaMin == null ? '' : (v.low ? '<span class="chip bad">abaixo da meta</span>' : '<span class="chip ok">acima da meta</span>');
+      var note = v.sobra < 0
+        ? '<span class="fix">Dá prejuízo: material e taxa passam do preço.</span>'
+        : 'Sobra <b>' + brl(v.sobra) + '</b> por atendimento · <b>' + brl(v.mes) + '</b> no mês';
+      if (v.low && v.precoMin != null) note += ' · <span class="fix">para bater a meta, cobrar a partir de ' + brl(v.precoMin) + '</span>';
+      o.innerHTML = '<div class="track" aria-hidden="true"><div class="fill' + (v.low ? ' low' : '') + '" style="width:' + w.toFixed(1) + '%"></div>' + meta + '</div>' +
+        '<div class="svc-val">' + brl(v.porHora) + '/h ' + chip + '</div>' +
+        '<p class="svc-note">' + note + '</p>';
+    });
+
+    $("svcSum").textContent = N1.format(r.qS) + " atendimentos e " + N1.format(r.horasMes / (r.W || 1)) + " h por semana";
+
+    // período e aluguel em uso
+    $("fase1").setAttribute("aria-pressed", String(state.fase === 1));
+    $("fase2").setAttribute("aria-pressed", String(state.fase === 2));
+    $("al-1-f").classList.toggle("on", state.fase === 1);
+    $("al-2-f").classList.toggle("on", state.fase === 2);
+    $("faseLbl").textContent = state.fase === 1 ? "(meses 1 a 3)" : "(do 4º mês em diante)";
+    $("custosTotal").textContent = brl(r.fixos);
+
+    // destaque
+    var hv = $("heroVal");
+    hv.textContent = brl(r.sobra);
+    hv.classList.toggle("neg", r.sobra < 0);
+    var pct = state.salario > 0 ? Math.max(0, Math.min(1, r.sobra / state.salario)) * 100 : (r.sobra > 0 ? 100 : 0);
+    $("heroProg").style.width = pct.toFixed(1) + "%";
+    var t;
+    if (r.qS === 0) t = "Coloque quantos atendimentos você faz por semana para ver o resultado.";
+    else if (r.sobra < 0) t = "O mês fecha " + brl(-r.sobra) + " no vermelho." + (r.empata != null ? " Para empatar: " + Math.ceil(r.empata) + " atendimentos por semana neste mix." : "");
+    else if (state.salario > 0 && r.sobra < state.salario) {
+      var extra = r.paraSalario != null ? Math.max(1, Math.ceil(r.paraSalario - r.qS)) : null;
+      t = "Faltam " + brl(state.salario - r.sobra) + " para o salário de " + brl(state.salario) + "." + (extra ? " São cerca de " + extra + " atendimento" + (extra > 1 ? "s" : "") + " a mais por semana." : "");
+    } else t = brl(r.sobra - state.salario) + " acima do salário que você quer (" + brl(state.salario) + "). Guarde a diferença na reserva.";
+    $("heroTxt").textContent = t;
+
+    $("tFat").textContent = brl(r.fat);
+    $("tFatS").textContent = "por mês, " + N1.format(r.W) + " semanas";
+    $("tFix").textContent = brl(r.fixos);
+    $("tFixS").textContent = "com aluguel de " + brl(r.aluguel);
+    $("tEmp").innerHTML = r.empata != null ? Math.ceil(r.empata) + ' <small>por semana</small>' : '–';
+    $("tHora").innerHTML = r.horaMin != null ? esc(brl(r.horaMin)) + ' <small>/hora</small>' : '–';
+    $("tHoraS").textContent = Math.round(r.horasMes) + " h atendendo no mês";
+
+    $("fTicket").textContent = brl(r.ticket);
+    $("fCpa").textContent = brl(r.cpa);
+    $("fVar").textContent = brl(r.mat + r.taxa);
+    $("fSal").textContent = r.paraSalario != null ? Math.ceil(r.paraSalario) + " atend./semana" : "–";
+    $("fRes").textContent = brl(r.fixos * 2);
+
+    // MEI
+    var ratio = r.anual / MEI_LIMITE, chipCls, chipTxt, meiTxt;
+    if (ratio <= 1) { chipCls = "ok"; chipTxt = "dentro do limite"; meiTxt = brl(r.anual) + " por ano, " + Math.round(ratio * 100) + "% do limite."; }
+    else if (ratio <= 1.2) { chipCls = "warn"; chipTxt = "passa do limite"; meiTxt = brl(r.anual) + " por ano. Até 20% acima, você paga a diferença e vira ME no ano seguinte."; }
+    else { chipCls = "bad"; chipTxt = "passa mais de 20%"; meiTxt = brl(r.anual) + " por ano. Acima de 20%, a mudança para ME vale de forma retroativa. Fale com um contador."; }
+    $("meiChip").innerHTML = '<span class="chip ' + chipCls + '">' + chipTxt + '</span>';
+    var mf = $("meiFill");
+    mf.style.width = (Math.min(ratio, 1.3) / 1.3 * 100).toFixed(1) + "%";
+    mf.className = "fill" + (chipCls === "warn" ? " warn" : chipCls === "bad" ? " low" : "");
+    $("meiTxt").textContent = meiTxt;
+
+    // barra do celular
+    $("barVal").textContent = brl(r.sobra);
+    $("barSub").innerHTML = r.empata != null ? 'empata com<br><b>' + Math.ceil(r.empata) + ' por semana</b>' : '';
+
+    $("exChip").hidden = state.edited;
+    updateSaveUI();
+  }
+
+  // ---------- salvar ----------
+  var art = null, canSave = false, saving = false, msgOverride = "";
+
+  function updateSaveUI() {
+    var dirty = state.updatedAt > savedAt;
+    var b = $("btnSave");
+    b.hidden = !canSave;
+    b.disabled = saving || !dirty;
+    var m;
+    if (msgOverride) m = msgOverride;
+    else if (saving) m = "Salvando…";
+    else if (canSave) m = dirty ? "Mudanças guardadas neste aparelho. Toque em Salvar para abrir com elas em qualquer lugar." : (savedAt ? "Tudo salvo no simulador." : "Mude o que quiser e toque em Salvar.");
+    else m = localOK ? "Seus números ficam guardados neste aparelho." : "Este navegador não guarda os números. Anote antes de fechar.";
+    $("saveMsg").textContent = m;
+  }
+
+  function buildDoc(st) {
+    var json = JSON.stringify(st).replace(/</g, "\\u003c");
+    return '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>' + SKELETON_RESET + '</style></head><body>\n' +
+      PAGE_TOP + '<style id="css">' + SRC_CSS + '</style>\n<div id="app"></div>\n<script type="application/json" id="saved">' + json + '<\/script>\n<script id="main">' + SRC_JS + '<\/script>\n\n</body></html>';
+  }
+
+  function doSave() {
+    if (!art || saving) return;
+    saving = true; msgOverride = ""; updateSaveUI();
+    var st = clone(state);
+    art.publish(buildDoc(st)).then(function () {
+      saving = false; savedAt = st.updatedAt;
+      msgOverride = "Salvo. A página vai recarregar com os seus números.";
+      updateSaveUI();
+    }, function (e) {
+      saving = false;
+      var c = e && e.code;
+      if (c === "conflict") msgOverride = "Outra pessoa salvou antes. A página vai recarregar com a versão nova; seus números continuam neste aparelho.";
+      else if (["not_writer", "not_granted", "not_declared", "consent_required", "capability_disabled", "capability_removed"].indexOf(c) >= 0) {
+        canSave = false;
+        msgOverride = "Aqui o simulador é só de leitura. Seus números ficam guardados neste aparelho.";
+      } else if (c === "rate_limited") msgOverride = "Muitas gravações seguidas. Espere um minuto e salve de novo.";
+      else msgOverride = "Não deu para salvar agora. Seus números continuam neste aparelho; tente de novo em instantes.";
+      updateSaveUI();
+    });
+  }
+
+  // ---------- resumo ----------
+  function summaryText() {
+    var r = calc(state);
+    var lines = [
+      "Simulador do salão · " + (state.fase === 1 ? "meses 1 a 3" : "do 4º mês em diante"),
+      "Atendimentos por semana: " + N1.format(r.qS),
+      "Faturamento no mês: " + brl(r.fat),
+      "Custos fixos: " + brl(r.fixos),
+      "Material e maquininha: " + brl(r.mat + r.taxa),
+      "Sobra para você: " + brl(r.sobra) + " (meta: " + brl(state.salario) + ")",
+      "Empata com: " + (r.empata != null ? Math.ceil(r.empata) + " atendimentos por semana" : "–"),
+      "Hora mínima: " + (r.horaMin != null ? brl(r.horaMin) + "/h" : "–")
+    ];
+    var low = state.servicos.map(function (x, i) { return { x: x, v: r.svcs[i] }; }).filter(function (o) { return o.v.low; });
+    if (low.length) {
+      lines.push("Abaixo da meta:");
+      low.forEach(function (o) { lines.push("- " + (o.x.n || "Serviço") + ": " + brl(o.v.porHora) + "/h" + (o.v.precoMin != null ? ", cobrar a partir de " + brl(o.v.precoMin) : "")); });
+    }
+    return lines.join("\n");
+  }
+
+  // ---------- aviso com desfazer ----------
+  var toastTimer = 0, undoFn = null;
+  function toast(msg, undo) {
+    $("toastMsg").textContent = msg;
+    undoFn = undo || null;
+    $("toastUndo").hidden = !undo;
+    $("toast").hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { $("toast").hidden = true; undoFn = null; }, 6000);
+  }
+
+  // ---------- eventos ----------
+  function touched() {
+    state.edited = true;
+    state.updatedAt = Date.now();
+    msgOverride = "";
+    saveLocal();
+    update();
+  }
+
+  function setBind(b, raw) {
+    var p = b.split(".");
+    if (p.length === 1) { state[p[0]] = parseNum(raw); return; }
+    var item = (p[0] === "svc" ? state.servicos : state.custos)[+p[1]];
+    if (!item) return;
+    item[p[2]] = p[2] === "n" ? String(raw).slice(0, 60) : parseNum(raw);
+  }
+  function getBind(b) {
+    var p = b.split(".");
+    if (p.length === 1) return state[p[0]];
+    var item = (p[0] === "svc" ? state.servicos : state.custos)[+p[1]];
+    return item ? item[p[2]] : 0;
+  }
+
+  function wire() {
+    document.addEventListener("input", function (e) {
+      var b = e.target && e.target.dataset && e.target.dataset.bind;
+      if (!b) return;
+      setBind(b, e.target.value);
+      touched();
+    });
+    document.addEventListener("change", function (e) {
+      var b = e.target && e.target.dataset && e.target.dataset.bind;
+      if (!b || /\.n$/.test(b)) return;
+      e.target.value = N2.format(getBind(b));
+    });
+    document.addEventListener("click", function (e) {
+      var a = e.target.closest && e.target.closest("[data-act]");
+      if (!a) return;
+      var act = a.dataset.act, i = +a.dataset.i, item;
+      if (act === "fase") {
+        state.fase = a.dataset.v === "1" ? 1 : 2;
+        saveLocal(); update();
+      } else if (act === "add-svc") {
+        state.servicos.push({ n: "", p: 0, m: 0, t: 60, q: 1 });
+        renderSvc(); touched();
+        $("svc-" + (state.servicos.length - 1) + "-n").focus();
+      } else if (act === "add-custo") {
+        state.custos.push({ n: "", v: 0 });
+        renderFix(); touched();
+        $("c-" + (state.custos.length - 1) + "-n").focus();
+      } else if (act === "rm-svc") {
+        item = state.servicos.splice(i, 1)[0];
+        renderSvc(); touched();
+        toast("Serviço removido.", function () { state.servicos.splice(i, 0, item); renderSvc(); touched(); });
+      } else if (act === "rm-custo") {
+        item = state.custos.splice(i, 1)[0];
+        renderFix(); touched();
+        toast("Custo removido.", function () { state.custos.splice(i, 0, item); renderFix(); touched(); });
+      }
+    });
+
+    $("toastUndo").addEventListener("click", function () {
+      var f = undoFn; undoFn = null; $("toast").hidden = true;
+      if (f) f();
+    });
+
+    $("btnSave").addEventListener("click", doSave);
+
+    $("btnCopy").addEventListener("click", function () {
+      var text = summaryText(), box = $("copyBox");
+      function fallback() {
+        box.value = text; box.hidden = false; box.focus(); box.select();
+        msgOverride = "Não deu para copiar direto. O texto está selecionado: copie pelo menu ou com Ctrl+C.";
+        updateSaveUI();
+      }
+      try {
+        navigator.clipboard.writeText(text).then(function () { box.hidden = true; toast("Resumo copiado. Cole no WhatsApp ou nas notas."); }, fallback);
+      } catch (err) { fallback(); }
+    });
+
+    var armed = 0, rb = $("btnReset");
+    rb.addEventListener("click", function () {
+      if (!armed) {
+        rb.textContent = "Toque de novo para apagar seus números";
+        rb.classList.add("danger");
+        armed = setTimeout(function () { armed = 0; rb.textContent = "Voltar ao exemplo"; rb.classList.remove("danger"); }, 4000);
+        return;
+      }
+      clearTimeout(armed); armed = 0;
+      rb.textContent = "Voltar ao exemplo"; rb.classList.remove("danger");
+      var prev = clone(state);
+      state = clone(DEFAULTS);
+      state.fase = prev.fase;
+      state.updatedAt = Date.now();
+      msgOverride = "";
+      saveLocal(); renderInputs(); update();
+      toast("Valores de exemplo de volta.", function () { state = prev; state.updatedAt = Date.now(); saveLocal(); renderInputs(); update(); });
+    });
+
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(function (es) {
+        es.forEach(function (en) { $("bar").classList.toggle("show", !en.isIntersecting); });
+      }).observe($("hero"));
+    } else $("bar").classList.add("show");
+  }
+
+  // ---------- início ----------
+  $("app").innerHTML = shell();
+  renderInputs();
+  wire();
+  update();
+
+  var w = window.claude;
+  if (w && typeof w.use === "function") {
+    w.use("artifact").then(function (ns) {
+      if (ns && typeof ns.publish === "function") { art = ns; canSave = true; updateSaveUI(); }
+    }, function () {});
+  }
+})();
+</script>
+</body>
+</html>
